@@ -1,11 +1,20 @@
-import gymnasium
 import numpy as np
+import torch
 
-# Do not modify the input of the 'act' function and the '__init__' function. 
+device = "cpu"
+
+
+# Do not modify the input of the 'act' function and the '__init__' function.
 class Agent(object):
     """Agent that acts randomly."""
+
     def __init__(self):
-        self.action_space = gymnasium.spaces.Box(-1.0, 1.0, (1,), np.float64)
+        self.actor = torch.jit.load(f"actor.pt", map_location=device)
+        self.actor.eval()
 
     def act(self, observation):
-        return self.action_space.sample()
+        observation = torch.tensor(
+            np.array([observation]), dtype=torch.float32, device=device
+        )
+        _, _, deterministic_action = self.actor(observation)
+        return deterministic_action.detach().cpu().numpy().squeeze(1)
