@@ -74,6 +74,7 @@ class Actor(nn.Module):
         self.fc_logstd = nn.Linear(256, n_action)  # log std is more stable
         self.LOG_STD_MAX = 2
         self.LOG_STD_MIN = -20
+        self.LOG_STD_RANGE = self.LOG_STD_MAX - self.LOG_STD_MIN
 
         # action rescaling
         self.register_buffer(
@@ -95,9 +96,7 @@ class Actor(nn.Module):
         mean = self.fc_mean(x)
         log_std = self.fc_logstd(x)
         log_std = torch.tanh(log_std)
-        log_std = self.LOG_STD_MIN + 0.5 * (self.LOG_STD_MAX - self.LOG_STD_MIN) * (
-            log_std + 1
-        )
+        log_std = self.LOG_STD_MIN + self.LOG_STD_RANGE * (log_std + 1) * 0.5
         std = log_std.exp()
 
         # get action, log_prob
@@ -237,15 +236,13 @@ class SACAgent:
         for param, target_param in zip(
             self.q1.parameters(), self.target_q1.parameters()
         ):
-            target_param.data.copy_(
-                self.tau * param.data + (1 - self.tau) * target_param.data
-            )
+            new_param = self.tau * param.data + (1 - self.tau) * target_param.data
+            target_param.data.copy_(new_param)
         for param, target_param in zip(
             self.q2.parameters(), self.target_q2.parameters()
         ):
-            target_param.data.copy_(
-                self.tau * param.data + (1 - self.tau) * target_param.data
-            )
+            new_param = self.tau * param.data + (1 - self.tau) * target_param.data
+            target_param.data.copy_(new_param)
 
     def learn(self, global_step: int) -> None:
         batch = self.replay_buffer.sample()
@@ -317,6 +314,7 @@ def train(
     total_steps: int = 5000000,
     warm_up_steps: int = 5000,
 ) -> None:
+    best_score = 0
     observations, info = envs.reset()
     observations = torch.tensor(observations, device=device, dtype=torch.float32)
     for step in range(1, total_steps + 1):
@@ -346,14 +344,18 @@ def train(
 
         if any(done):
             # log
-            print(
-                f'[{step}], alpha={agent.alpha:.3f}, returns={info["episode"]["r"]}, time={np.mean(info["episode"]["t"])}'
-            )
-            returns.append(np.average(info["episode"]["r"]))
+            batch_returns = np.around(info["episode"]["r"], 2)
+            avg_time = round(np.mean(info["episode"]["t"]), 2)
+            print(f"[{step}], α={agent.alpha:.3f}, r={batch_returns}, t={avg_time}")
+            returns.append(np.average(batch_returns))
             if (step % 100000) == 0:
                 plt.clf()
                 plt.plot(returns)
                 plt.savefig("returns")
+            # checkpoint
+            if (returns[-1] > best_score + 1):
+                best_score = returns[-1]
+                agent.save("best")
             # reset envs
             observations, info = envs.reset()
             observations = torch.tensor(
@@ -374,9 +376,8 @@ def make_env(idx: int):
         # warppers
         env = RecordEpisodeStatistics(env, buffer_length=1000)
         if idx == 0:
-            env = RecordVideo(
-                env, video_folder="video", episode_trigger=lambda n: n % 100 == 0
-            )
+            every_hundred = lambda n: n % 100 == 0
+            env = RecordVideo(env, video_folder="video", episode_trigger=every_hundred)
         return env
 
     return thunk
@@ -408,10 +409,17 @@ if __name__ == "__main__":
     try:
         train(envs, agent, returns)
     except KeyboardInterrupt:
-        pass
+        save_agent = ""
+        while True:
+            if save_agent == "yes":
+                agent.save("sac_test_ckpt")
+                break
+            elif save_agent == "no":
+                break
+            else:
+                save_agent = input("\nSave current agent? [yes/no]:")
     finally:
         envs.close()
         plt.clf()
         plt.plot(returns)
         plt.savefig("returns")
-        agent.save("sac_test_ckpt")
