@@ -71,9 +71,9 @@ class Agent(object):
 
     def __init__(self):
         envs = gym.vector.SyncVectorEnv([make_env(1)])
-        self.actor = Actor(envs)
+        self.actor = Actor(envs).to(device)
         envs.close()
-        self.actor.load_state_dict(torch.load("actor.pt"))
+        self.actor.load_state_dict(torch.load("actor.pt", map_location=device))
         self.actor.eval()
 
     def act(self, observation):
