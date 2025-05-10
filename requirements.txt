@@ -8,3 +8,4 @@ imageio==2.37.0
 numpy==2.2.5
 torch==2.7.0
 torchrl==0.8.0
+matplotlib
