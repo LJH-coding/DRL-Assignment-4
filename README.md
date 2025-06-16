@@ -1,7 +1,7 @@
 ![Test GIF](https://media.giphy.com/media/l0HlvtIPzPdt2usKs/giphy.gif)
 
 <p align="center">
-  <img src="assets\rl-video-episode-1200.gif" alt="Project Banner" />
+  <img src="assets\rl-video-episode-1200.gif" alt="Project Banner" width="200"/>
 </p>
 <h3 align="center">SAC implementation</h3>
 
