@@ -18,9 +18,9 @@ This repository contains the implementation of reinforcement learning agents for
 
 | Environment        | Description                                       | Demonstration                                        |
 |--------------------|---------------------------------------------------|------------------------------------------------------|
-| **Pendulum**       | Control a simple inverted pendulum system.        | ![Pendulum](assets\Pendulum-example.gif)                     |
-| **CartPole Balance** | Balance a pole on a moving cart.                  | ![CartPole Balance](assets\CartPole-example.gif)     |
-| **Humanoid Walk**  | Control a complex humanoid robot to walk.         | ![Humanoid Walk](assets\rl-video-episode-1200.gif)           |
+| **Pendulum**       | Control a simple inverted pendulum system.        | <img src="assets\Pendulum-example.gif" alt="Pendulum" />                     |
+| **CartPole Balance** | Balance a pole on a moving cart.                  | <img src="assets\CartPole-example.gif" alt="CartPole Balance" />     |
+| **Humanoid Walk**  | Control a complex humanoid robot to walk.         | <img src="assets\rl-video-episode-1200.gif" alt="Humanoid Walk" />          |
 
 # 📁 Structure
 
